@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+```{r}
+library(tidyverse)
+
+```
+```{r}
+movies <- read_csv("/Users/user/Documents/CodeClan/de13_classnotes/week_01/day_3/6_homework_cleaning_data/data/movies.csv")
+```
+
+```{r}
+head(movies)
+```
+# the difference betwewen title and original title?
+# how's the popularity been calculated
+# a function to compare two colummns to choose between titile and original_title?
+```{r}
+movies_selected <- movies %>%
+  select(title, runtime, budget)
+```
+```{r}
+movies_selected %>%
+  summarise(count = sum(is.na(title)))
+
+movies_selected %>%
+  summarise(count = sum(is.na(budget)))
+
+movies_selected %>%
+  summarise(count = sum(is.na(runtime)))
+
+# combine those in one?
+```
+```{r}
+movies_runtime <- movies_selected %>%
+  mutate(runtime = na_if(runtime, 0))
+```
+
+```{r}
+movies_runtime %>%
+  summarise(count = sum(is.na(runtime)))
+```
+
+```{r}
+movies_imputed <- movies_runtime %>%
+  mutate(runtime = coalesce(runtime, median(runtime, na.rm = TRUE)))
+```
+
+```{r}
+movies_imputed %>%
+  summarise(count = sum(is.na(runtime)))
+```
+
+```{r}
+glimpse(movies)
+
+movies_imputed %>%
+  mutate(budget == if_else(budget < 100,
+                          median(budget)))
+```
+
