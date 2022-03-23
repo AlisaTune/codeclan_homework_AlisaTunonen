@@ -105,9 +105,13 @@ department = 'Engineering' AND fte_hours = 1;
 
 --Q15--
 
-
-
-
+SELECT 
+  first_name,
+  last_name,
+  fte_hours,
+  salary,
+  fte_hours * salary AS effective_yearly_salary
+FROM employees
 
 
   
