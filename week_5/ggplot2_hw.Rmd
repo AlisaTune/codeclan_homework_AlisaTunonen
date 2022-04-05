@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+qb_revenue_breakdown
+qb_monthly_sales
+qb_competitors
+qb_device_data
+
+```{r}
+library(tidyverse)
+
+qb_revenue_breakdown <- CodeClanData::qb_revenue_breakdown
+
+col_scheme <- c("#E89FE9", "#50434F", "#B6A7B5", "#F9A472", "#BD7040")
+```
+```{r}
+ggplot(qb_revenue_breakdown) +
+  aes(x = Year,  y = Revenue, fill = Product) +
+  geom_col()
+
+ggplot(qb_revenue_breakdown) +
+  aes(x = Year,  y = Revenue, fill = Product) +
+  geom_col() +
+  labs( title = "\nRevenue Breakdown",
+        x = "",
+        y = "") +
+  scale_fill_manual(
+    values = c(
+      "Accessories" = "#E89FE9",
+      "Smart Watches" = "#B6A7B5",
+      "Subscription Servises" = "#F9A472",
+      "Trackers" = "#BD7040"
+    )
+  )  
+```
+
+```{r}
+qb_monthly_sales <- CodeClanData::qb_monthly_sales
+```
+```{r}
+flagship_monthly_sales <- qb_monthly_sales %>%
+  filter(Cashflow == "Kwikbit Unit 1 Sales")
+
+ggplot(flagship_monthly_sales) +
+  geom_line(aes(x = Date, y = Amount)) +
+  labs( title = "\nQikBit Monthly Sales",
+        x = "",
+        y = "") 
+```
+
+```{r}
+monthly_sales_total <- qb_monthly_sales %>%
+  filter(Cashflow != "Kwikbit Unit 1 Sales")
+
+ggplot(monthly_sales_total) +
+  geom_line(aes(x = Date, y = Amount, group = Cashflow, colour = Cashflow))
+```
+
+```{r}
+qb_competitors <- CodeClanData::qb_competitors
+```
+```{r}
+ggplot(qb_competitors) +
+  geom_area(aes(x = Year, y = Revenue, group = Company, fill = Company))
+```
+
+```{r}
+ggplot(qb_competitors) +
+  geom_line(aes(x = Year, y = Revenue, group = Company, colour = Company)) +
+  geom_point(aes(x = Year, y = Revenue))
+```
+
+```{r}
+qb_device_data <- CodeClanData::qb_device_data
+
+
+```
+
+```{r}
+ggplot(qb_device_data) +
+  geom_line(aes(x = counts, y = hours, group = device)) +
+  facet_wrap(id~device)
+```
+
