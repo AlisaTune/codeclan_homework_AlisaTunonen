@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+```
+
+```{r}
+titanic <- read_csv("data/titanic.csv")
+```
+
+```{r}
+unique(titanic$class)
+```
+```{r}
+library(tidyverse)
+titanic_crew <- titanic%>%
+  mutate(crew = ifelse(class %in% c("3rd", "2nd", "1st"), FALSE, TRUE)) %>%
+  mutate(survived = ifelse(survived == "yes", TRUE, FALSE))
+
+```
+
+```{r}
+library(prob)
+library(gtools)
+library(tidyverse)
+
+
+prob_survived_crew <- titanic_crew %>%
+  dplyr::filter(crew == TRUE) %>%
+  summarise(prob = sum(survived) / n())
+```
+
+```{r}
+prob_survived_pass <- titanic_crew %>%
+  dplyr::filter(crew == FALSE) %>%
+  summarise(prob = sum(survived) / n())
+```
+
+```{r}
+library(janitor)
+
+titanic_crew %>%
+  tabyl(survived, crew) %>%
+  adorn_totals(where = c("row", "col")) %>%
+  adorn_percentages(denominator = "all") 
+  
+```
+
+
+```{r}
+#Question 1.
+#If I roll a six-sided dice once, what is the probability of getting a number less than 5?
+
+s_die_one <- rolldie(1)
+
+event_one <- s_die_one %>% 
+  dplyr::filter(X1 < 5)
+
+p_event_one <- nrow(event_one)/nrow(s_die_one)
+```
+
+```{r}
+#Question 2.
+#How many outcomes are there in the sample space of an experiment in which we toss three dice?
+
+rolldie(3)
+
+# the number of outcomes = the number of rows, which is 216 in this case
+```
+
+```{r}
+#Question 3.
+
+s_die <- rolldie(4)
+
+s_die_four <- s_die %>%
+  mutate(total = rowSums(.))
+
+s_die_four_event <- s_die_four%>%
+  dplyr::filter(total %in% c(5,6,7))  # there are 34 different outcomes
+
+p_event_four <- nrow(s_die_four_event)/nrow(s_die_four) # the probability of this event
+
+```
+```{r}
+# Question 4.
+permn(5) # the order in which people sit matters, so we check the number pf permutaions 
+
+#120 - the number of permutations()
+
+1 / 120 # there's only one desired outcome where people are arranged by their height
+```
+
