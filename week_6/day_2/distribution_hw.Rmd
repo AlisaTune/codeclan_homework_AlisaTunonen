@@ -1,0 +1,67 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+mobile_data <- read_csv("data/20190928-items.csv")
+
+library(janitor)
+mobile_data <- clean_names(mobile_data)
+```
+```{r}
+mobile_data %>%
+  group_by(brand) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n))
+```
+
+```{r}
+mobile_data_top <- mobile_data %>%
+  filter(brand == "Samsung")
+
+ mobile_data_stat <- mobile_data_top %>%
+  summarise(
+    num = n(),
+    mean = mean(rating),
+    sd = sd(rating)
+  )
+```
+```{r}
+mobile_data_top %>%
+  ggplot(aes(x = rating)) +
+  geom_histogram(aes(y = ..density..), col = "white")
+```
+```{r}
+mobile_data_top %>%
+  ggplot(aes(x = rating)) +
+  geom_histogram(aes(y = ..density..), col = "white")+
+  stat_function(
+    fun = dnorm, 
+    args = list(
+      mean = mobile_data_stat$mean,
+      sd = mobile_data_stat$sd
+    ),
+    col = "red"
+  )
+```
+
+__you can choose binwidth (how granulated your data is) (not number of bins) to increase reproducibility of your plot__         
+
+```{r}
+mobile_data_top_scale <- mobile_data_top %>%
+  mutate(z_rating = scale(rating))
+
+mobile_data_top_scale %>%
+  filter(!between(z_rating, left = -3, right = 3))
+```
+```{r}
+count <- mobile_data_top_scale %>%
+  filter(between(z_rating, left = - 3, right = 3)) %>%
+  nrow()
+
+count / nrow(mobile_data_top_scale)
+```
+
