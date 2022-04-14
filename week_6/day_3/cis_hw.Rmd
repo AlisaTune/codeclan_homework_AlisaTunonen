@@ -1,0 +1,101 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Task 1.
+Load the data again, clean_names(), and re-familiarise yourself with it
+```{r}
+library(tidyverse)
+library(janitor)
+library(fastGraph)
+library(infer)
+```
+```{r}
+house_sales <- read_csv("data/ames.csv") %>%
+  clean_names()
+
+range(house_sales$lot_area) # to check what the min and the max value are to identify possible outliers
+```
+
+Task 2.
+Investigate the distribution of lot_area. Is the distribution roughly normal? If not, what problems do you find?
+
+```{r}
+house_sales %>%
+  ggplot(aes(x = lot_area)) +
+  geom_histogram(col = "black", fill = "steel blue", alpha = 0.7)+
+  # to make sure all the data is visualised and can be seen on the graph
+  coord_cartesian(xlim = c(1000, 220000)) 
+
+# the data is highly skewed
+```
+
+Task 3.
+Compute and visualise a bootstrap sampling distribution for the mean(lot_area) of the sold houses.
+
+```{r}
+bootstrap_house_sales <- house_sales%>%
+  rep_sample_n(size = 2930, replace = TRUE, reps = 100) %>%
+  summarise(
+    mean_lot_area = mean(lot_area)
+  )
+```
+
+```{r}
+lot_plot_boot <- bootstrap_house_sales %>%
+  ggplot(aes(x = mean_lot_area)) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)
+  )
+```
+Task 4.
+Use your bootstrap distribution to calculate a 95% CI for mean(lot_area), and visualise it on the distribution
+
+```{r}
+ci_95 <- bootstrap_house_sales %>%
+  summarise(
+    mean = mean(mean_lot_area),
+    lower_bound = quantile(mean_lot_area, probs = 0.025),
+    upper_bound = quantile(mean_lot_area, probs = 0.975)
+  )
+```
+```{r}
+infer_ci_95 <- bootstrap_house_sales %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+```
+```{r}
+bootstrap_sample <- house_sales %>%
+  specify(response = lot_area) %>%
+  generate(reps = 100, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+
+```{r}
+bootstrap_sample %>%
+  visualise() +
+  shade_confidence_interval(endpoints = infer_ci_95)
+```
+
+Task 5.
+You would like to know the mean(lot_area) of the sold houses with higher confidence. Calculate the 99% CI for this variable (you can re-use your bootstrap distribution from above). Is it narrower or broader than the 95% CI? Does that make sense?
+
+```{r}
+ci_99 <- bootstrap_house_sales%>%
+  summarise(
+    mean = mean(mean_lot_area),
+    lower_bound = quantile(mean_lot_area, probs = 0.005),
+    upper_bound = quantile(mean_lot_area, probs = 0.995)
+  )
+```
+
+```{r}
+infer_ci_99 <- bootstrap_house_sales %>%
+  get_confidence_interval(level = 0.99, type = "percentile")
+
+bootstrap_sample %>%
+  visualise() +
+  shade_confidence_interval(endpoints = infer_ci_99)
+```
+
+Task 6.
+Calculate the point estimate of the mean(lot_area)
+
