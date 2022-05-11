@@ -1,0 +1,94 @@
+```{r}
+library(tidyverse)
+library(janitor)
+library(GGally)
+library(ggfortify)
+library(fastDummies)
+```
+
+```{r}
+# read in the data and check the summary 
+housing_prices <- read_csv("data/housing_prices.csv")
+
+summary(housing_prices) # we can see there are missing values present in the column total_bedrooms
+```
+```{r}
+# the expectation being that total_rooms and total_bedrooms are strongly correlated, we check that by building a plot matrix 
+
+ggpairs(housing_prices, 4:5)
+
+# based on the visualisations and the calculated correlation coefficient done by ggpairs, we can see there's very strong correlation between the two chosen variables - total_rooms and total_bedrooms (according to J. D. Evans's scale)
+```
+
+```{r}
+# since the correlation between total_bedrooms and total_rooms is significant, we drop total_bedrooms from the dataset
+
+housing_prices <- housing_prices%>%
+  select(-total_bedrooms)
+
+summary(housing_prices) # since we no longer have total_bedrooms, there are no more NAs to deal with
+```
+
+```{r}
+# we run ggpairs again to investigate correlations between median_house_value and the predictors 
+ggpairs(housing_prices)
+
+# looking at the correlation coefficients of possible predictors, the one that shows the strongest correlation (at r = 0.643) with the median_house_value is median_income which represents median income for households within a block of houses) 
+```
+
+```{r}
+housing_prices %>%
+  ggplot(aes(x = median_income, y = median_house_value))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  scale_y_log10()
+
+# after plotting the correlation, we can see that there seems to be a sharp limit to the median_house_value. It looks like some of the data has been cut off.
+
+# perhaps we need to scale the data as there's a significant difference between variables
+  
+```
+
+```{r}
+# to fit a categorical predictor ocean_proximity, we need to turn 5 categories into Boolean values
+housing_prices %>%
+  distinct(ocean_proximity)
+
+housing_prices_dummy <- housing_prices %>%
+  fastDummies::dummy_cols(select_columns = "ocean_proximity",
+                          remove_first_dummy = TRUE,
+                          remove_selected_columns = TRUE)
+```
+
+```{r}
+# we use a boxplot to visualise the relationship between ocean_proximity and median_house_value 
+housing_prices %>%
+  ggplot(aes(x = ocean_proximity, y = median_house_value))+
+  geom_boxplot()
+
+# we can see that the distribution of different categories of ocean_proximity are different.
+# the average house price is significantly higher than those located near bay/near ocean.
+# the average house price is lower when located inland compared to other locations
+```
+```{r}
+housing_prices %>%
+  summarise(cor = cor(median_house_value, ocean_proximity))
+```
+
+
+```{r}
+model <- lm(median_house_value ~ median_income, housing_prices)
+
+summary(model)
+
+autoplot(model)
+```
+From the plot Residuals vs Fitted we can see that the blue line is almost horizontal at zero. There's no pattern in the residual plot, so we can assume that the relationship is linear.
+
+From the the plot Scale_Location, we can see that the line is largely horizontal but the spread of points isn't particularly equal, suggesting non-constant variances in the residuals errors (or heteroscedasticity).
+
+_A possible solution to reduce the heteroscedasticity problem is to use a log or square root transformation of the outcome variable (y)_
+
+From the Normal Q-Q plot, we see that most of the points do not fall along our reference line, the points form a curve that deviates markedly from a straight line so we can't assume normality.
+
+From the plot Residuals vs Leverage, we see that teh plot highlights 3 most extreme points, with a standardized residuals below -5. 
