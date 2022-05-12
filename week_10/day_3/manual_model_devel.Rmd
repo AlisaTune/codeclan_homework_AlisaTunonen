@@ -1,0 +1,126 @@
+```{r}
+library(tidyverse)
+library(janitor)
+library(GGally)
+library(ggfortify)
+library(modelr)
+library(here)
+library(mosaic)
+```
+
+```{r}
+kc_house_data <- read_csv(here("data/kc_house_data.csv"))
+
+summary(kc_house_data)
+
+unique(kc_house_data$grade)
+
+# if there are a lot more grades and there's still an exponential relationship there, we can do a feature transformation and turn grade into an exponential and use it in a model
+```
+
+```{r}
+kc_house_data_trim <- kc_house_data %>%
+  select(-c(id, date, sqft_living15, sqft_lot15, zipcode))
+```
+
+```{r}
+#kc_house_data_trim_pca <- prcomp(kc_house_data_trim, center = TRUE, scale. = TRUE)
+
+#summary(kc_house_data_trim_pca)
+```
+
+```{r}
+kc_house_data_prep <- kc_house_data_trim %>% 
+  mutate(waterfront = as.factor(waterfront))%>%
+  mutate(view = as.factor(view))%>%
+  mutate(condition = as.factor(condition))%>%
+  mutate(renovated = as.logical(yr_renovated))
+
+kc_house_data_prep <- kc_house_data_prep %>%
+  mutate(grade_bad = ifelse(grade >= 1 & grade <= 4, 1, 0),
+         grade_low = ifelse(grade >= 5 & grade <= 6, 1, 0),
+         grade_aver = ifelse(grade == 7, 1, 0),
+         grade_high = ifelse(grade >= 8 & grade <= 10, 1, 0))%>%
+  select(-grade)
+
+unique(kc_house_data_prep$yr_renovated)
+```
+
+```{r}
+alias(lm(price ~ ., kc_house_data_prep))
+```
+```{r}
+kc_house_data_prep <- kc_house_data_prep %>%
+  select(-c(yr_renovated, sqft_basement))
+```
+
+# First predictor
+
+```{r}
+ggpairs(kc_house_data_prep, 1:6) #from checking the first six columns we can see that sqft_living is potentially a good predictor with the cor coeff being 0.702
+```
+
+```{r}
+ggpairs(kc_house_data_prep, c(1, 7:12))
+```
+
+```{r}
+ggpairs(kc_house_data_prep, c(1, 13:18))
+```
+
+# First model
+
+```{r}
+mod1a <- lm(price ~ sqft_living, data = kc_house_data_prep_scaled)
+
+summary(mod1a)
+
+autoplot(mod1a)
+
+```
+```{r}
+kc_house_data_prep_resid <- kc_house_data_prep_scaled %>%
+  add_residuals(mod1a)
+
+```
+
+
+```{r}
+mod1b <- lm(price ~ bathrooms, data = kc_house_data_prep)
+
+summary(mod1b)
+
+autoplot(mod1b)
+```
+
+
+```{r}
+kc_house_data_prep_scaled <- kc_house_data_prep %>%
+  mutate(sqft_living = scale(sqft_living))%>%
+   mutate(price = scale(price))
+  
+```
+
+```{r}
+kc_house_data_prep %>%
+  ggplot(aes(x = view, y = price))+
+  geom_boxplot()
+```
+```{r}
+kc_house_data_prep %>%
+  ggplot(aes(x = waterfront, y = price))+
+  geom_boxplot()
+```
+
+```{r}
+kc_house_data_prep %>%
+  ggplot(aes(x = condition, y = price))+
+  geom_boxplot()
+```
+
+```{r}
+kc_house_data_prep %>%
+  ggplot(aes(x = renovated, y = price))+
+  geom_boxplot()
+```
+
